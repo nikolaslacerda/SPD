@@ -8,6 +8,14 @@
 
 **Input**: User description: "Quero uma página nova de benchmark onde o usuário possa entrar e fazer uma bateria de testes sobre um modelo LLM. O usuário terá diversos atributos diferentes que poderá definir. Ele poderá selecionar uma lista de modelos LLMs, definir chunk size e tamanho do banco vetorial, definir o arquivo de entrada para o RAG, definir o modelo de embeddings, e adicionar perguntas de teste para verificar a similaridade da resposta do modelo. Ao executar os testes, os atributos são carregados no programa e os testes para cada pergunta são executados. Ao final, é mostrado uma tabela com os resultados de cada modelo para cada pergunta e algumas métricas de desempenho. O usuário poderá exportar a tabela."
 
+## Clarifications
+
+### Session 2026-09-22
+
+- Q: How should the similarity score be presented to the user in the results table? → A: Both a percentage (0–100%) AND a pass/fail verdict against a configurable similarity threshold.
+- Q: Should there be a limit on how many LLM models and test questions a user can include in a single benchmark run? → A: Soft cap with a warning (recommend ≤5 models and ≤20 questions), but the user may still proceed beyond it.
+- Q: When the user defines "vector database size," is that a limit on the number of chunks stored, or a limit on storage size (e.g., MB)? → A: Maximum number of chunks (count-based limit).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Configurar e executar uma bateria de testes (Priority: P1)
@@ -123,30 +131,40 @@ valor (comparação visual na própria página) mesmo sem exportação.
   uma lista de modelos suportados, para incluir na bateria de testes.
 - **FR-003**: O sistema DEVE permitir que o usuário defina o chunk size utilizado para dividir o
   documento de entrada.
-- **FR-004**: O sistema DEVE permitir que o usuário defina um tamanho máximo para o banco vetorial
-  (quantidade máxima de chunks armazenados/considerados) utilizado no benchmark.
+- **FR-004**: O sistema DEVE permitir que o usuário defina um tamanho máximo para o banco vetorial,
+  expresso como a quantidade máxima de chunks armazenados/considerados, utilizado no benchmark.
 - **FR-005**: O sistema DEVE permitir que o usuário defina um arquivo de entrada a ser utilizado
   como base documental do RAG durante o benchmark.
 - **FR-006**: O sistema DEVE permitir que o usuário selecione o modelo de embeddings a ser
   utilizado durante o benchmark.
+- **FR-006a**: O sistema DEVE permitir que o usuário defina um limiar (threshold) de similaridade
+  configurável, usado para determinar o veredito de aprovação/reprovação de cada resultado.
 - **FR-007**: O sistema DEVE permitir que o usuário adicione, edite e remova perguntas de teste,
   cada uma contendo o texto da pergunta e a resposta esperada correspondente.
 - **FR-008**: O sistema DEVE impedir o início da execução caso algum atributo obrigatório esteja
   ausente (nenhum modelo selecionado, nenhum arquivo de entrada, nenhum modelo de embeddings, ou
   nenhuma pergunta de teste com resposta esperada), exibindo uma mensagem de validação.
+- **FR-008a**: O sistema DEVE exibir um aviso quando o usuário selecionar mais de 5 modelos e/ou
+  mais de 20 perguntas de teste em uma mesma bateria, informando que a execução pode demorar
+  significativamente mais tempo; o usuário DEVE poder prosseguir mesmo assim (aviso não bloqueia
+  a execução).
 - **FR-009**: Ao iniciar a execução, o sistema DEVE processar o arquivo de entrada e gerar a base
   vetorial de acordo com os atributos configurados (chunk size, tamanho do banco vetorial, modelo
   de embeddings) antes de executar as perguntas.
 - **FR-010**: O sistema DEVE executar cada pergunta de teste contra cada modelo LLM selecionado,
   reutilizando o fluxo de consulta RAG (incluindo guardrails) já existente no produto.
-- **FR-011**: O sistema DEVE calcular um grau de similaridade entre a resposta gerada por cada
-  modelo e a resposta esperada definida para aquela pergunta.
+- **FR-011**: O sistema DEVE calcular um grau de similaridade (percentual, 0–100%) entre a
+  resposta gerada por cada modelo e a resposta esperada definida para aquela pergunta, e DEVE
+  derivar um veredito de aprovação/reprovação comparando esse percentual com o limiar de
+  similaridade configurado (FR-006a).
 - **FR-012**: O sistema DEVE exibir uma tabela de resultados com uma entrada por combinação de
-  modelo e pergunta, incluindo a resposta gerada e o grau de similaridade calculado.
+  modelo e pergunta, incluindo a resposta gerada, o percentual de similaridade calculado e o
+  veredito de aprovação/reprovação correspondente.
 - **FR-013**: O sistema DEVE indicar na tabela quando uma pergunta foi bloqueada por um guardrail
   (de pergunta ou de resposta), distinguindo esse caso de um resultado de similaridade normal.
 - **FR-014**: O sistema DEVE exibir métricas de desempenho agregadas por modelo, incluindo, no
-  mínimo, a similaridade média e o tempo médio de resposta.
+  mínimo, a similaridade média (percentual), a taxa de aprovação (% de perguntas com veredito de
+  aprovação) e o tempo médio de resposta.
 - **FR-015**: O sistema DEVE exibir uma indicação de progresso durante a execução da bateria de
   testes (ex.: modelo/pergunta atualmente em processamento).
 - **FR-016**: O sistema DEVE continuar a execução dos demais modelos/perguntas caso um modelo
@@ -160,15 +178,16 @@ valor (comparação visual na própria página) mesmo sem exportação.
 
 - **Configuração de Benchmark**: representa os atributos definidos pelo usuário para uma bateria
   de testes — chunk size, tamanho máximo do banco vetorial, arquivo de entrada, modelo de
-  embeddings e a lista de modelos LLM selecionados.
+  embeddings, limiar de similaridade (threshold) e a lista de modelos LLM selecionados.
 - **Pergunta de Teste**: representa uma pergunta configurada pelo usuário, contendo o texto da
   pergunta e a resposta esperada usada como referência para o cálculo de similaridade.
 - **Resultado de Benchmark**: representa o resultado de uma combinação específica de modelo e
-  pergunta — resposta gerada, grau de similaridade, tempo de resposta, e status (concluído,
-  bloqueado por guardrail, ou falho).
+  pergunta — resposta gerada, percentual de similaridade, veredito de aprovação/reprovação
+  (derivado do limiar configurado), tempo de resposta, e status (concluído, bloqueado por
+  guardrail, ou falho).
 - **Resumo de Desempenho por Modelo**: representa as métricas agregadas de um modelo ao longo de
-  toda a bateria de testes — similaridade média, tempo médio de resposta, e quantidade de
-  perguntas bloqueadas ou falhas.
+  toda a bateria de testes — similaridade média, taxa de aprovação, tempo médio de resposta, e
+  quantidade de perguntas bloqueadas ou falhas.
 
 ## Success Criteria *(mandatory)*
 
