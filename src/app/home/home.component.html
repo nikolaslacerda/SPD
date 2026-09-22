@@ -1,0 +1,182 @@
+<main class="main">
+  <div class="container">
+    <h1>ASSISTENTE CONVERSACIONAL TAKERE
+    </h1>
+    
+    <!-- Browser Error Section -->
+    <div *ngIf="showBrowserError" class="error-section card">
+      <h2>⚠️ WebGPU Not Available</h2>
+      <p class="error-message">{{ browserErrorDetails }}</p>
+      
+      <div class="setup-instructions">
+        <h3>🔧 Quick Fix:</h3>
+        <ol>
+          <li>
+            <strong>Visit:</strong> 
+            <a href="chrome://flags" target="_blank">chrome://flags</a> or 
+            <a href="edge://flags" target="_blank">edge://flags</a>
+          </li>
+          <li><strong>Search:</strong> "WebGPU"</li>
+          <li><strong>Enable:</strong> "Unsafe WebGPU"</li>
+          <li><strong>Relaunch</strong> browser</li>
+          <li><strong>Refresh</strong> this page</li>
+        </ol>
+      </div>
+    </div>
+    
+    <!-- Loading -->
+    <div *ngIf="loading && !showBrowserError" class="loading-section">
+      <h2>Carregando Modelos...</h2>
+      
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="loadingProgress"></div>
+        </div>
+        <div class="progress-percentage">{{ loadingProgress }}%</div>
+      </div>
+    </div>
+    
+    <!-- Main App -->
+    <div *ngIf="!loading" class="chat-layout">
+
+      <!-- Collapsible Setup Section -->
+      <div class="setup-section" [class.collapsed]="!showSetupSection">
+        <button class="toggle-setup-button" (click)="toggleSetup()">
+          {{ showSetupSection ? '▼' : '▶' }}
+        </button>
+        
+        <div class="setup-content" *ngIf="showSetupSection">
+
+          <!-- Fixed RAG Configuration -->
+
+          <!-- Upload Section -->
+          <section class="upload-section card">
+            
+            <div *ngIf="!uploading && !loadedDocumentName" class="upload-area">
+              <input 
+                type="file" 
+                id="fileInput"
+                accept=".pdf" 
+                (change)="onFileUpload($event)"
+                [disabled]="uploading"
+              />
+              <label for="fileInput" class="upload-button" [class.disabled]="uploading">
+                📎 Selecionar Arquivo PDF
+              </label>
+            </div>
+            
+            <div *ngIf="uploading" class="upload-progress">
+              <h3>📄 Processing: {{ uploadFileName }}</h3>
+              <div class="progress-container">
+                <div class="progress-bar">
+                  <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+                </div>
+                <div class="progress-percentage">{{ uploadProgress }}%</div>
+              </div>
+            </div>
+            
+            <div *ngIf="!uploading && loadedDocumentName" class="loaded-document">
+              <div class="document-info">
+                <span class="document-icon">📄</span>
+                <span class="document-name">{{ loadedDocumentName }}</span>
+              </div>
+              <button 
+                class="change-document-button" 
+                (click)="loadedDocumentName = ''"
+              >
+                Trocar Documento
+              </button>
+            </div>
+          </section>
+
+        </div>
+      </div>
+      
+      <!-- Toast -->
+      <div *ngIf="showToast" class="toast" 
+           [class.success]="toastType === 'success'" 
+           [class.error]="toastType === 'error'">
+        <span class="toast-icon">{{ toastType === 'success' ? '✅' : '❌' }}</span>
+        <span class="toast-message">{{ toastMessage }}</span>
+      </div>
+      
+      <!-- Chat -->
+      <div class="chat-section">
+        <div class="chat-container" #chatContainer>
+
+          <div *ngIf="chatMessages.length === 0" class="chat-empty-state">
+            <div class="empty-icon">💬</div>
+            <p>Powered by Llama-3.2 3B</p>
+          </div>
+          
+          <div class="chat-messages">
+            <div 
+              *ngFor="let message of chatMessages" 
+              class="message-wrapper"
+              [class.user]="message.role === 'user'"
+              [class.assistant]="message.role === 'assistant'"
+            >
+              <div class="message-bubble">
+                <div class="message-content">{{ message.content }}</div>
+                <div class="message-meta">
+                  <span class="message-time">{{ message.timestamp | date:'HH:mm' }}</span>
+                  <span *ngIf="message.sources && message.sources.length > 0" class="message-sources">
+                    📄 Pages: {{ getPageNumbers(message.sources) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div *ngIf="querying" class="message-wrapper assistant">
+              <div class="message-bubble typing">
+                <div class="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        
+        <!-- Input -->
+        <div class="chat-input-container">
+          <div class="chat-input-wrapper">
+            <input 
+              type="text"
+              [(ngModel)]="question"
+              placeholder="Pergunte algo sobre seu documento"
+              [disabled]="querying || !loadedDocumentName"
+              (keyup.enter)="onQuery()"
+              class="chat-input"
+            />
+            <button 
+              *ngIf="!querying"
+              (click)="onQuery()"
+              [disabled]="!question.trim() || !loadedDocumentName"
+              class="send-button"
+            >
+              ➤
+            </button>
+            <button 
+              *ngIf="querying"
+              (click)="stopGeneration()"
+              class="stop-button"
+            >
+              ⏹
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+
+      <div class="footer-content">
+      </div>
+    </footer>
+
+  </div>
+</main>

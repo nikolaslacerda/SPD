@@ -1,0 +1,143 @@
+<main class="main">
+  <div class="container">
+    <h1>Takere RAG</h1>
+    <p class="subtitle">Private Document Chat - 100% Client-Side AI</p>
+    
+    <!-- Browser Error Section -->
+    
+    <div *ngIf="loading && !showBrowserError" class="loading-section">
+      <h2>🔄 Loading AI Models...</h2>
+      
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="loadingProgress"></div>
+        </div>
+        <div class="progress-percentage">{{ loadingProgress }}%</div>
+      </div>
+      
+      <p class="progress-text">{{ initProgress || 'Initializing...' }}</p>
+      
+      <div class="loading-steps">
+        <div class="step" [class.active]="currentStep >= 1" [class.complete]="currentStep > 1">
+          <span class="step-icon">{{ currentStep > 1 ? '✅' : currentStep === 1 ? '⏳' : '⏸️' }}</span>
+          <span>LLM Model</span>
+        </div>
+        <div class="step" [class.active]="currentStep >= 2" [class.complete]="currentStep > 2">
+          <span class="step-icon">{{ currentStep > 2 ? '✅' : currentStep === 2 ? '⏳' : '⏸️' }}</span>
+          <span>Embedder</span>
+        </div>
+        <div class="step" [class.active]="currentStep >= 3" [class.complete]="currentStep > 3">
+          <span class="step-icon">{{ currentStep > 3 ? '✅' : currentStep === 3 ? '⏳' : '⏸️' }}</span>
+          <span>Vector Store</span>
+        </div>
+      </div>
+      
+      <p class="info">First load may take a few minutes (downloading model files)</p>
+    </div>
+    
+    <div *ngIf="!loading" class="content-section">
+      
+      <section class="upload-section card">
+        <h2>📄 Step 1: Upload PDF Document</h2>
+        
+        <div *ngIf="!uploading && !loadedDocumentName" class="upload-area">
+          <input 
+            type="file" 
+            id="fileInput"
+            accept=".pdf" 
+            (change)="onFileUpload($event)"
+            [disabled]="uploading"
+          />
+          <label for="fileInput" class="upload-button" [class.disabled]="uploading">
+            📎 Choose PDF File
+          </label>
+        </div>
+        
+        <div *ngIf="uploading" class="upload-progress">
+          <h3>📄 Processing: {{ uploadFileName }}</h3>
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+            </div>
+            <div class="progress-percentage">{{ uploadProgress }}%</div>
+          </div>
+          <p class="progress-text">{{ uploadStatus }}</p>
+        </div>
+        
+        <div *ngIf="!uploading && loadedDocumentName" class="loaded-document">
+          <div class="document-info">
+            <span class="document-icon">📄</span>
+            <span class="document-name">{{ loadedDocumentName }}</span>
+          </div>
+          <button class="change-document-button" (click)="loadedDocumentName = ''" title="Upload a different document">
+            🔄 Change Document
+          </button>
+        </div>
+        
+        <p class="hint">💡 Your document stays 100% local - never sent to any server</p>
+      </section>
+      
+      <!-- Toast Notification -->
+      <div *ngIf="showToast" class="toast" [class.success]="toastType === 'success'" [class.error]="toastType === 'error'">
+        <span class="toast-icon">{{ toastType === 'success' ? '✅' : '❌' }}</span>
+        <span class="toast-message">{{ toastMessage }}</span>
+      </div>
+      
+      <section class="query-section card">
+        <h2>💬 Step 2: Ask Questions</h2>
+        <div class="query-input-group">
+          <input 
+            type="text"
+            [(ngModel)]="question"
+            placeholder="What is this document about?"
+            [disabled]="querying"
+            (keyup.enter)="onQuery()"
+            class="query-input"
+          />
+          <button 
+            (click)="onQuery()"
+            [disabled]="!question.trim() || querying"
+            class="ask-button"
+          >
+            {{ querying ? '🤔 Thinking...' : '🚀 Ask' }}
+          </button>
+        </div>
+        
+        <!-- Thinking Animation -->
+        <div *ngIf="querying && !answer" class="thinking-animation">
+          <div class="thinking-dots">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <p class="thinking-text">AI is analyzing your document...</p>
+        </div>
+      </section>
+      
+      <section *ngIf="answer || querying" class="answer-section card">
+        <h2>✨ Answer:</h2>
+        <div class="answer-content">
+          <p *ngIf="answer">{{ answer }}</p>
+          <div *ngIf="querying && answer" class="streaming-indicator">
+            <span class="cursor-blink">▊</span>
+          </div>
+        </div>
+      </section>
+      
+      <section class="tech-info">
+        <p><strong>Tech Stack:</strong> Angular 20 + WebLLM/WeInfer + Transformers.js + PDF.js + IndexedDB + WebGPU</p>
+        <p><strong>Privacy:</strong> 100% client-side - all processing happens in your browser via WebGPU/WASM</p>
+      </section>
+    </div>
+    
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-links">
+          <a href="/privacy-policy" class="footer-link">Privacy Policy</a>
+          <span class="footer-separator">•</span>
+          <a href="/cookie-policy" class="footer-link">Cookie Policy</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+</main>
