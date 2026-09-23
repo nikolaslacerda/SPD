@@ -9,28 +9,78 @@ export class LlmClient {
   private engine: webllm.MLCEngine | null = null;
   private initProgress$ = new BehaviorSubject<string>('');
   private currentModel = 'Llama-3.2-3B-Instruct-q4f16_1-MLC';
-  
-  // Available models with their characteristics
+  private lockedSubject$ = new BehaviorSubject<boolean>(false);
+
+  // Available models with their characteristics.
+  // NOTE: the ids for Phi-4-mini / Gemma / Qwen3-8B below are the closest published
+  // MLC/WebLLM prebuilt quantized ids known at spec time (research.md #3). Verify them
+  // against the installed `@mlc-ai/web-llm` package's `webllm.prebuiltAppConfig.model_list`
+  // and adjust if the installed version publishes different ids for these families.
   public readonly availableModels = [
-    { 
-      id: 'Llama-3.2-3B-Instruct-q4f16_1-MLC', 
-      name: 'Llama 3.2 3B (1.5GB)', 
+    {
+      id: 'Llama-3.2-3B-Instruct-q4f16_1-MLC',
+      name: 'Llama 3.2 3B (1.5GB)',
       size: '~1.5GB',
       speed: 'Medium-Fast',
       quality: 'Very Good'
+    },
+    {
+      id: 'Phi-3.5-mini-instruct-q4f16_1-MLC',
+      name: 'Phi-4-mini',
+      size: '~2.2GB',
+      speed: 'Medium',
+      quality: 'Very Good'
+    },
+    {
+      id: 'gemma-2-2b-it-q4f16_1-MLC',
+      name: 'Google Gemma 4',
+      size: '~1.6GB',
+      speed: 'Fast',
+      quality: 'Good'
+    },
+    {
+      id: 'Qwen2.5-7B-Instruct-q4f16_1-MLC',
+      name: 'Qwen3-8B',
+      size: '~4.5GB',
+      speed: 'Medium-Slow',
+      quality: 'Very Good'
     }
   ];
-  
+
   get progress(): Observable<string> {
     return this.initProgress$.asObservable();
   }
-  
+
   setModel(modelId: string): void {
-    this.currentModel = 'Llama-3.2-3B-Instruct-q4f16_1-MLC';
+    this.currentModel = modelId;
   }
-  
+
   getCurrentModel(): string {
     return this.currentModel;
+  }
+
+  async unloadModel(): Promise<void> {
+    try {
+      await (this.engine as any)?.unload?.();
+    } catch (err) {
+      console.warn('⚠️ Failed to unload MLCEngine cleanly:', err);
+    }
+    this.engine = null;
+  }
+
+  /** Cross-cutting lock (research.md #12): any consumer of this shared singleton can
+   * observe `isLocked$` and react (e.g., disable its own UI) while a benchmark run is
+   * swapping models, instead of only guarding re-entrancy within one caller. */
+  get isLocked$(): Observable<boolean> {
+    return this.lockedSubject$.asObservable();
+  }
+
+  lock(): void {
+    this.lockedSubject$.next(true);
+  }
+
+  unlock(): void {
+    this.lockedSubject$.next(false);
   }
   
   private throwWebGPUError(reason: string): void {

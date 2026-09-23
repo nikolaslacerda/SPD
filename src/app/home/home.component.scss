@@ -1197,6 +1197,18 @@
   }
 }
 
+/* Benchmark lock notice */
+.benchmark-lock-notice {
+  margin: 0 1rem 0.5rem;
+  padding: 0.6rem 1rem;
+  background: #241c05;
+  border: 1px solid #ffb020;
+  border-radius: 8px;
+  color: #ffb020;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
 /* Chat Input */
 .chat-input-container {
   border-top: 2px solid var(--border);

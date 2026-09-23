@@ -21,9 +21,13 @@ export class PdfParser {
       `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.mjs`;
   }
   
-  async parseFile(file: File): Promise<ParsedChunk[]> {
+  protected loadDocument(data: ArrayBuffer) {
+    return pdfjsLib.getDocument({ data }).promise;
+  }
+
+  async parseFile(file: File, chunkSize = 500): Promise<ParsedChunk[]> {
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pdf = await this.loadDocument(arrayBuffer);
     
     const chunks: ParsedChunk[] = [];
     let globalChunkIndex = 0;
@@ -35,10 +39,10 @@ export class PdfParser {
         .map((item: any) => item.str)
         .join(' ');
       
-      // Simple chunking (500 chars) with page metadata
-      for (let j = 0; j < text.length; j += 500) {
+      // Simple chunking (default 500 chars) with page metadata
+      for (let j = 0; j < text.length; j += chunkSize) {
         chunks.push({
-          text: text.slice(j, j + 500),
+          text: text.slice(j, j + chunkSize),
           pageNumber: pageNum,
           chunkIndex: globalChunkIndex++
         });

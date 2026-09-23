@@ -1,4 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable, Optional } from '@angular/core';
+import { VECTOR_STORE_DB_NAME } from '../benchmark/models/vector-store-db-name.token';
+import { SimilarityService } from './similarity';
 
 interface Chunk {
   id: string;
@@ -17,10 +19,16 @@ export interface SearchResult {
 })
 export class VectorStore {
   private db: IDBDatabase | null = null;
-  
-  async initialize(): Promise<void> {
+
+  constructor(
+    private similarity: SimilarityService,
+    @Optional() @Inject(VECTOR_STORE_DB_NAME) private injectedDbName?: string
+  ) {}
+
+  async initialize(dbName?: string): Promise<void> {
+    const effectiveDbName = dbName ?? this.injectedDbName ?? 'takere-db';
     return new Promise<void>((resolve, reject) => {
-      const request = indexedDB.open('takere-db', 1);
+      const request = indexedDB.open(effectiveDbName, 1);
       request.onupgradeneeded = (e) => {
         const db = (e.target as IDBOpenDBRequest).result;
         if (!db.objectStoreNames.contains('chunks')) {
@@ -96,7 +104,7 @@ export class VectorStore {
             console.log('🔀 Using hybrid search (semantic + keyword)');
             // Hybrid search: combine semantic and keyword scores
             const scored: SearchResult[] = allChunks.map(chunk => {
-              const semanticScore = this.cosineSimilarity(queryEmbedding, chunk.embedding);
+              const semanticScore = this.similarity.cosineSimilarity(queryEmbedding, chunk.embedding);
               const keywordScore = this.bm25Score(queryText, chunk.text, allChunks);
               // Weighted combination: 70% semantic, 30% keyword
               const hybridScore = (0.7 * semanticScore) + (0.3 * keywordScore);
@@ -116,7 +124,7 @@ export class VectorStore {
             // Standard semantic search
             const scored: SearchResult[] = allChunks.map(chunk => ({
               chunk,
-              score: this.cosineSimilarity(queryEmbedding, chunk.embedding)
+              score: this.similarity.cosineSimilarity(queryEmbedding, chunk.embedding)
             }));
             scored.sort((a, b) => b.score - a.score);
             const results = scored.slice(0, topK);
@@ -129,13 +137,6 @@ export class VectorStore {
         }
       };
     });
-  }
-  
-  private cosineSimilarity(a: number[], b: number[]): number {
-    const dot = a.reduce((sum, val, i) => sum + val * b[i], 0);
-    const magA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
-    const magB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-    return dot / (magA * magB);
   }
   
   /**

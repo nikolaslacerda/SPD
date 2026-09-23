@@ -1,0 +1,35 @@
+<main class="benchmark-main">
+  <div class="benchmark-container">
+    <h1>🧪 Benchmark de Modelos LLM</h1>
+    <p class="subtitle">Compare modelos LLM contra um conjunto de perguntas de teste</p>
+
+    <app-benchmark-config (runRequested)="onRunRequested($event)"></app-benchmark-config>
+
+    <section class="progress-card card" *ngIf="runState.phase === 'ingesting' || runState.phase === 'running'">
+      <h2>⏳ Executando...</h2>
+      <p *ngIf="runState.phase === 'ingesting'">Processando documento e gerando base vetorial...</p>
+      <p *ngIf="runState.phase === 'running'">
+        Modelo atual: <strong>{{ runState.currentModelId }}</strong> —
+        Pergunta: <strong>{{ runState.currentQuestionId }}</strong>
+      </p>
+      <div class="progress-bar">
+        <div
+          class="progress-fill"
+          [style.width.%]="runState.totalCount ? (runState.completedCount / runState.totalCount) * 100 : 0"
+        ></div>
+      </div>
+      <p class="progress-count">{{ runState.completedCount }} / {{ runState.totalCount }}</p>
+    </section>
+
+    <section class="error-card card" *ngIf="runState.phase === 'error'">
+      <h2>❌ Erro na execução</h2>
+      <p>{{ runState.errorMessage }}</p>
+    </section>
+
+    <app-benchmark-results
+      *ngIf="(runState.phase === 'running' || runState.phase === 'completed') && lastConfig"
+      [runState]="runState"
+      [config]="lastConfig!"
+    ></app-benchmark-results>
+  </div>
+</main>

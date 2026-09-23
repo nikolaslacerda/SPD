@@ -1,0 +1,114 @@
+:host {
+  --primary: #2a2a2a;
+  --secondary: #3a3a3a;
+  --success: #06d6a0;
+  --background: #000000;
+  --card-bg: #111111;
+  --text: #e6e6e6;
+  --text-light: #9a9a9a;
+  --border: #1f1f1f;
+
+  display: block;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+}
+
+.card h2 {
+  color: var(--text);
+  font-size: 1.1rem;
+  margin: 0 0 1rem 0;
+}
+
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.results-header h2 {
+  margin: 0;
+}
+
+.export-button {
+  background: var(--success);
+  color: #04241a;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.export-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+th {
+  color: var(--text-light);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.answer-cell {
+  max-width: 320px;
+  white-space: pre-wrap;
+}
+
+.result-row.blocked {
+  background: rgba(255, 176, 32, 0.08);
+}
+
+.result-row.failed {
+  background: rgba(255, 107, 107, 0.08);
+}
+
+.status-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.blocked-badge {
+  color: #ffb020;
+}
+
+.failed-badge {
+  color: #ff6b6b;
+}
+
+.verdict-badge {
+  font-weight: 600;
+}
+
+.verdict-badge.pass {
+  color: var(--success);
+}
+
+.verdict-badge.fail {
+  color: #ff6b6b;
+}

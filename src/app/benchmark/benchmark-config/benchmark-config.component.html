@@ -1,0 +1,84 @@
+<form class="config-form card" [formGroup]="form" (ngSubmit)="onRun()">
+  <h2>⚙️ Configuração do Benchmark</h2>
+
+  <section class="field-group">
+    <label>Modelos LLM</label>
+    <div class="model-checkboxes">
+      <label class="model-checkbox" *ngFor="let model of availableModels">
+        <input
+          type="checkbox"
+          [checked]="isModelSelected(model.id)"
+          (change)="onModelToggle(model.id, $any($event.target).checked)"
+        />
+        <span>{{ model.displayName }}</span>
+      </label>
+    </div>
+    <p class="field-error" *ngIf="selectedModelIdsControl.touched && selectedModelIdsControl.invalid">
+      Selecione ao menos um modelo.
+    </p>
+  </section>
+
+  <section class="field-group">
+    <label for="chunkSize">Chunk size</label>
+    <input id="chunkSize" type="number" formControlName="chunkSize" min="1" />
+  </section>
+
+  <section class="field-group">
+    <label for="maxVectorStoreChunks">Tamanho máximo do banco vetorial (nº de chunks)</label>
+    <input id="maxVectorStoreChunks" type="number" formControlName="maxVectorStoreChunks" min="1" />
+  </section>
+
+  <section class="field-group">
+    <label for="inputFile">Arquivo de entrada (PDF)</label>
+    <input id="inputFile" type="file" accept=".pdf" (change)="onFileChange($event)" />
+    <p class="field-error" *ngIf="fileError">{{ fileError }}</p>
+    <p class="field-error" *ngIf="form.get('inputFile')?.touched && form.get('inputFile')?.invalid && !fileError">
+      Selecione um arquivo de entrada.
+    </p>
+  </section>
+
+  <section class="field-group">
+    <label for="embeddingModel">Modelo de embeddings</label>
+    <input id="embeddingModel" type="text" formControlName="embeddingModel" readonly />
+    <p class="field-hint">
+      Modelo fixo — trocar de modelo de embeddings invalidaria a base vetorial existente.
+    </p>
+  </section>
+
+  <section class="field-group">
+    <label for="similarityThresholdPercent">Threshold de similaridade (%)</label>
+    <input
+      id="similarityThresholdPercent"
+      type="number"
+      formControlName="similarityThresholdPercent"
+      min="0"
+      max="100"
+    />
+  </section>
+
+  <section class="field-group questions-section">
+    <label>Perguntas de teste</label>
+    <div class="question-row" *ngFor="let q of questions.controls; let i = index" [formGroup]="q">
+      <input type="text" placeholder="Pergunta" formControlName="question" />
+      <input type="text" placeholder="Resposta esperada" formControlName="expectedAnswer" />
+      <button type="button" class="remove-question-button" (click)="removeQuestion(i)" [disabled]="questions.length <= 1">
+        ✕
+      </button>
+    </div>
+    <button type="button" class="add-question-button" (click)="addQuestion()">+ Adicionar pergunta</button>
+    <p class="field-error" *ngIf="questions.touched && questions.invalid">
+      Adicione ao menos uma pergunta com resposta esperada.
+    </p>
+  </section>
+
+  <p class="run-size-warning" *ngIf="showRunSizeWarning">
+    ⚠️ Você selecionou mais de 5 modelos e/ou mais de 20 perguntas — a execução pode demorar
+    significativamente mais tempo.
+  </p>
+
+  <p class="field-error form-level-error" *ngIf="form.touched && form.invalid">
+    Preencha todos os campos obrigatórios antes de executar o benchmark.
+  </p>
+
+  <button type="submit" class="run-button" [disabled]="!canRun">▶ Executar Benchmark</button>
+</form>

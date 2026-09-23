@@ -1,0 +1,75 @@
+<section class="results-card card" *ngIf="runState.results.length > 0">
+  <div class="results-header">
+    <h2>📊 Resultados</h2>
+    <button
+      type="button"
+      class="export-button"
+      [disabled]="!canExport"
+      (click)="onExport()"
+    >
+      ⬇ Exportar CSV
+    </button>
+  </div>
+
+  <table class="results-table">
+    <thead>
+      <tr>
+        <th>Modelo</th>
+        <th>Pergunta</th>
+        <th>Resposta gerada</th>
+        <th>Similaridade</th>
+        <th>Veredito</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        *ngFor="let row of runState.results"
+        class="result-row"
+        [class.blocked]="row.status === 'blocked'"
+        [class.failed]="row.status === 'failed'"
+        [attr.data-testid]="'result-row'"
+      >
+        <td>{{ row.modelId }}</td>
+        <td>{{ row.questionId }}</td>
+        <td class="answer-cell">
+          <span *ngIf="row.status === 'completed'">{{ row.generatedAnswer }}</span>
+          <span *ngIf="row.status === 'blocked'" class="status-badge blocked-badge">🚫 Bloqueado pelo guardrail</span>
+          <span *ngIf="row.status === 'failed'" class="status-badge failed-badge">❌ Falhou: {{ row.errorMessage }}</span>
+        </td>
+        <td>{{ row.similarityPercent !== null ? (row.similarityPercent | number: '1.0-1') + '%' : '—' }}</td>
+        <td>
+          <span *ngIf="row.verdict === 'pass'" class="verdict-badge pass">✅ Aprovado</span>
+          <span *ngIf="row.verdict === 'fail'" class="verdict-badge fail">❌ Reprovado</span>
+          <span *ngIf="row.verdict === null">—</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="summary-card card" *ngIf="runState.summaries.length > 0">
+  <h2>📈 Resumo por Modelo</h2>
+
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>Modelo</th>
+        <th>Similaridade média</th>
+        <th>Taxa de aprovação</th>
+        <th>Tempo médio</th>
+        <th>Bloqueados</th>
+        <th>Falhas</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let summary of runState.summaries">
+        <td>{{ summary.modelId }}</td>
+        <td>{{ summary.averageSimilarityPercent !== null ? (summary.averageSimilarityPercent | number: '1.0-1') + '%' : '—' }}</td>
+        <td>{{ summary.passRatePercent !== null ? (summary.passRatePercent | number: '1.0-1') + '%' : '—' }}</td>
+        <td>{{ summary.averageResponseTimeMs !== null ? (summary.averageResponseTimeMs | number: '1.0-0') + 'ms' : '—' }}</td>
+        <td>{{ summary.blockedCount }}</td>
+        <td>{{ summary.failedCount }}</td>
+      </tr>
+    </tbody>
+  </table>
+</section>

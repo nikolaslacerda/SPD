@@ -32,7 +32,8 @@
     "os": false,
     "stream": false,
     "util": false,
-    "events": false
+    "events": false,
+    "url": false
   },
   "private": true,
   "dependencies": {

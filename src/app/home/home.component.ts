@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef, ViewChild, ElementRef } from '@an
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RagEngine } from '../services/rag-engine';
+import { LlmClient } from '../services/llm-client';
 import { VERSION } from '../version';
 
 interface ChatMessage {
@@ -54,14 +55,23 @@ export class HomeComponent implements OnInit {
   showSetupSection = true;
   shouldStopGeneration = false;
 
+  /** True while a benchmark run holds the shared LlmClient (research.md #12). */
+  benchmarkLocked = false;
+
   readonly appVersion = VERSION;
 
   constructor(
     private rag: RagEngine,
+    private llmClient: LlmClient,
     private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
+    this.llmClient.isLocked$.subscribe((locked) => {
+      this.benchmarkLocked = locked;
+      this.cdr.detectChanges();
+    });
+
     const capabilities = this.checkBrowserCapabilities();
 
     if (!capabilities.supported) {

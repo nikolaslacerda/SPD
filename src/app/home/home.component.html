@@ -140,21 +140,27 @@
           </div>
         </div>
         
+        <!-- Benchmark lock notice -->
+        <p *ngIf="benchmarkLocked" class="benchmark-lock-notice">
+          🧪 O assistente está ocupado executando um benchmark. Aguarde a conclusão para continuar
+          a conversa.
+        </p>
+
         <!-- Input -->
         <div class="chat-input-container">
           <div class="chat-input-wrapper">
-            <input 
+            <input
               type="text"
               [(ngModel)]="question"
               placeholder="Pergunte algo sobre seu documento"
-              [disabled]="querying || !loadedDocumentName"
+              [disabled]="querying || !loadedDocumentName || benchmarkLocked"
               (keyup.enter)="onQuery()"
               class="chat-input"
             />
-            <button 
+            <button
               *ngIf="!querying"
               (click)="onQuery()"
-              [disabled]="!question.trim() || !loadedDocumentName"
+              [disabled]="!question.trim() || !loadedDocumentName || benchmarkLocked"
               class="send-button"
             >
               ➤
