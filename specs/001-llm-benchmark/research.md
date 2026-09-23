@@ -173,6 +173,24 @@ pattern already used in `HomeComponent`, since `app.config.ts` uses
 (model loading, streaming generation, progress updates) under zoneless mode; this is an existing
 project-wide constraint, not new to this feature.
 
+### 11. Instance Isolation for the Benchmark
+
+**Decision**: The Benchmark module/component will use component-level providers (or a dedicated factory via DI) to instantiate its own RagEngine and VectorStore tree. An InjectionToken will be introduced to configure the VectorStore's `dbName`, allowing the chat to use 'takere-db' while the benchmark injects 'takere-benchmark-db'.
+
+**Rationale**: VectorStore and RagEngine are global singletons (provided in 'root'). Dynamically changing the database would cause data leakage between the chat and the benchmark.
+
+### 12. LlmClient state management during benchmarking
+
+**Decision**: The LlmClient will remain a strict singleton. The Benchmark module must read the active model before starting (Snapshot), block other parts of the application from using the service (Lock), perform the model swaps, and—mandatorily—restore the original model upon completion or destruction (Restore).
+
+**Rationale**: The LlmClient is a shared singleton. Unlike the database, we cannot instantiate multiple instances of the LlmClient due to the high memory/VRAM consumption of local language models. However, the benchmark dynamically switches models, which would corrupt the active chat model.
+
+### 13. Modelo de Embeddings Fixo
+
+**Decision**: In its current state (MVP), the Embedder will support and load only one optimized model by default. FR-006 will be addressed passively: the settings UI will display the model in use as a read-only field for transparency purposes, with no option to switch models.
+
+**Rationale**: Requirement FR-006 allows the user to select the embedding model. However, changing the embedding model invalidates the entire existing vector database, as different models generate vectors with incompatible dimensionalities and latent spaces. Recalculating the embeddings for the entire knowledge base locally would create a severe performance bottleneck.
+
 ## Summary of resulting Technical Context
 
 - **Language/Version**: TypeScript 5.9 (strict), Angular 20.3

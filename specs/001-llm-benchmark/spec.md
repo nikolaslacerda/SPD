@@ -227,3 +227,4 @@ valor (comparação visual na própria página) mesmo sem exportação.
 - Resultados de uma bateria de testes não precisam ser persistidos entre sessões do navegador
   além do necessário para exibição e exportação imediatas; não há requisito de histórico de
   benchmarks nesta funcionalidade.
+  - Premissa sobre o FR-006 (Seleção de Embeddings): Devido a restrições de compatibilidade de índices vetoriais, o sistema inicial implementará um único modelo de embeddings hardcoded. A "seleção" citada no FR-006 assume-se resolvida através da exibição transparente do modelo ativo na interface, configurando-o como read-only até que uma arquitetura de re-indexação em background seja planejada em versões futuras.
