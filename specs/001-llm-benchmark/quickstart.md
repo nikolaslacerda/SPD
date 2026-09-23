@@ -79,6 +79,17 @@ similarity) is identifiable at a glance without extra explanation (SC-005).
 **Expected outcome**: a `.csv` file downloads within a few seconds, containing one row per
 model/question result plus the per-model summary rows (SC-003).
 
+## Scenario 6 — Chat is disabled while a benchmark runs (research.md #12)
+
+1. Start a benchmark run (Scenario 1 or 2) with at least one model that takes a few seconds to
+   load.
+2. While the run is in progress (`phase = 'running'` or `'ingesting'`), navigate to the Chat/Home
+   page.
+
+**Expected outcome**: the chat's message input and send action are disabled, with a short notice
+that a benchmark is running (e.g., "O assistente está ocupado executando um benchmark"). Once the
+benchmark run completes, return to Chat/Home and confirm the input/send action are enabled again.
+
 ## Regression check — existing chat flow unaffected
 
 Since this feature modifies shared services (`LlmClient.setModel`, `PdfParser.parseFile`,
@@ -89,3 +100,11 @@ before:
 2. Upload a PDF, ask a question, confirm a streamed answer appears with citations as before.
 3. Confirm chunk size and vector store behavior for chat are unchanged (both now use the same
    defaults as before the benchmark feature was added).
+4. Run a benchmark (Scenario 1 or 2) with a model **different** from the one chat was using, then
+   navigate back to Chat/Home and ask another question. Confirm chat is using its original model
+   again (not left on whatever model the benchmark last loaded) — this exercises the
+   snapshot/lock/restore behavior in research.md #12, since `LlmClient` is a singleton shared
+   between chat and the benchmark.
+5. Confirm the chat's knowledge base (documents uploaded before the benchmark run) is still
+   intact and searchable after running a benchmark — this exercises the isolated `VectorStore`
+   instance from research.md #11, since a bug there would mix or clear the chat's data.

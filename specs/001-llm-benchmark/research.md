@@ -181,9 +181,11 @@ project-wide constraint, not new to this feature.
 
 ### 12. LlmClient state management during benchmarking
 
-**Decision**: The LlmClient will remain a strict singleton. The Benchmark module must read the active model before starting (Snapshot), block other parts of the application from using the service (Lock), perform the model swaps, and—mandatorily—restore the original model upon completion or destruction (Restore).
+**Decision**: The LlmClient will remain a strict singleton. The Benchmark module must read the active model before starting (Snapshot), block other parts of the application from using the service (Lock), perform the model swaps, and—mandatorily—restore the original model upon completion or destruction (Restore). The Lock is implemented **on `LlmClient` itself**, not only inside `BenchmarkRunnerService`: `LlmClient` exposes `lock(): void`, `unlock(): void`, and `isLocked$: Observable<boolean>` (a `BehaviorSubject<boolean>` under the hood, consistent with its existing `progress` Observable pattern). `BenchmarkRunnerService.run()` calls `lock()` before swapping models and `unlock()` in a `finally` block alongside the model restore. Any other consumer of `LlmClient` — today, that's `HomeComponent` (chat) — subscribes to `isLocked$` and disables its own model-invoking UI (the message input and send action) while `true`, showing a short notice that a benchmark is running.
 
-**Rationale**: The LlmClient is a shared singleton. Unlike the database, we cannot instantiate multiple instances of the LlmClient due to the high memory/VRAM consumption of local language models. However, the benchmark dynamically switches models, which would corrupt the active chat model.
+**Rationale**: The LlmClient is a shared singleton. Unlike the database, we cannot instantiate multiple instances of the LlmClient due to the high memory/VRAM consumption of local language models. However, the benchmark dynamically switches models, which would corrupt the active chat model. A lock flag local to `BenchmarkRunnerService` only prevents a second overlapping benchmark run — it does nothing to stop `HomeComponent` from calling `LlmClient.generate()`/`setModel()` concurrently with the benchmark's swap loop if the user simply navigates to the chat page while a run is in progress (a normal SPA navigation, not an edge case). Putting the lock flag on `LlmClient` itself, with an observable other components can react to, is the only way to actually satisfy the "must not regress chat" constraint against that scenario.
+
+**Alternatives considered**: Keeping the lock as a private flag inside `BenchmarkRunnerService` only — rejected because it can't prevent `HomeComponent` (or any other future consumer) from using `LlmClient` concurrently, since nothing outside `BenchmarkRunnerService` would ever know a run is in progress.
 
 ### 13. Modelo de Embeddings Fixo
 
@@ -207,5 +209,7 @@ project-wide constraint, not new to this feature.
 - **Performance Goals**: Sequential per-model execution; no hard latency target beyond the soft
   run-size warning (>5 models or >20 questions) already defined in the spec
 - **Constraints**: Local-only processing (no network calls for inference/embeddings/storage);
-  zoneless change detection; must not regress existing chat flow behavior
+  zoneless change detection; must not regress existing chat flow behavior — enforced via
+  `LlmClient.lock()`/`unlock()`/`isLocked$`, which `HomeComponent` must observe and react to
+  (research.md #12)
 - **Scale/Scope**: Single benchmark page, one run at a time, no cross-session persistence

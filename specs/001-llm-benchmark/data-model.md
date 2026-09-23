@@ -42,7 +42,7 @@ This is the `FormGroup`'s value shape for `BenchmarkConfigComponent`.
 | `chunkSize` | `number` | Default `500` (matches existing `PdfParser` default); `Validators.min(1)` |
 | `maxVectorStoreChunks` | `number` | Max number of chunks considered/stored (count-based per clarification); `Validators.min(1)` |
 | `inputFile` | `File \| null` | Required (FR-008); PDF only, validated on file-picker change, not via `FormControl` validator |
-| `embeddingModel` | `string` | Fixed to the existing embedding model id (`Xenova/all-MiniLM-L6-v2`) unless/until more than one embedding model is wired into `Embedder`; kept as a field for forward compatibility with FR-006 |
+| `embeddingModel` | `string` | Read-only, always `Xenova/all-MiniLM-L6-v2` — the `Embedder` supports exactly one embedding model by design (research.md #13: switching embedding models would invalidate the whole vector database, since different models produce incompatible vector spaces). FR-006 is satisfied passively: the field is displayed for transparency, not offered as a selector |
 | `similarityThresholdPercent` | `number` | 0–100; `Validators.required`, `Validators.min(0)`, `Validators.max(100)` (FR-006a) |
 | `questions` | `TestQuestion[]` | Backed by a `FormArray`; `Validators.required` (min 1 item) |
 
@@ -108,6 +108,23 @@ Exposed as an RxJS `Observable<BenchmarkRunState>` (a `BehaviorSubject` under th
 the existing `LlmClient.progress` / `RagEngine.progress` pattern already used in the codebase
 (research.md — no Signals are used elsewhere in this project, so this feature stays consistent
 with `Observable`-based state rather than introducing Signals for just one feature).
+
+**Isolation notes (research.md #11, #12)**: `BenchmarkRunnerService` does not use the root-level
+`VectorStore`/`RagEngine` singletons directly. The benchmark's component tree provides its own
+`VectorStore`/`RagEngine` instances (via component-level `providers`), configured through an
+`InjectionToken<string>` for the vector store's `dbName`, so the chat's `'takere-db'` is never
+touched. `LlmClient` remains a single shared instance (multiple loaded LLMs would exceed
+available VRAM), so `BenchmarkRunnerService.run()` snapshots the model id active before the run
+starts, calls `LlmClient.lock()`, and restores the snapshotted model plus calls
+`LlmClient.unlock()` on completion, failure, or early destruction/navigation-away (restore) —
+this is required to satisfy the "must not regress chat" constraint in plan.md.
+
+**Cross-component lock contract (research.md #12)**: the lock is not private to
+`BenchmarkRunnerService` — it lives on `LlmClient` itself as `lock(): void`, `unlock(): void`,
+and `isLocked$: Observable<boolean>`. `HomeComponent` (the chat UI) subscribes to `isLocked$` and
+disables its message input/send action while `true`, with a short notice explaining a benchmark
+is running. Without this, a user navigating to chat mid-benchmark-run could trigger
+`LlmClient.generate()`/`setModel()` concurrently with the benchmark's own model-swap loop.
 
 ## Export payload (CSV)
 

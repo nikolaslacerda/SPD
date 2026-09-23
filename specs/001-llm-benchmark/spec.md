@@ -142,7 +142,7 @@ valor (comparação visual na própria página) mesmo sem exportação.
 - **FR-007**: O sistema DEVE permitir que o usuário adicione, edite e remova perguntas de teste,
   cada uma contendo o texto da pergunta e a resposta esperada correspondente.
 - **FR-008**: O sistema DEVE impedir o início da execução caso algum atributo obrigatório esteja
-  ausente (nenhum modelo selecionado, nenhum arquivo de entrada, nenhum modelo de embeddings, ou
+  ausente (nenhum modelo selecionado, nenhum arquivo de entrada, ou
   nenhuma pergunta de teste com resposta esperada), exibindo uma mensagem de validação.
 - **FR-008a**: O sistema DEVE exibir um aviso quando o usuário selecionar mais de 5 modelos e/ou
   mais de 20 perguntas de teste em uma mesma bateria, informando que a execução pode demorar
@@ -227,4 +227,4 @@ valor (comparação visual na própria página) mesmo sem exportação.
 - Resultados de uma bateria de testes não precisam ser persistidos entre sessões do navegador
   além do necessário para exibição e exportação imediatas; não há requisito de histórico de
   benchmarks nesta funcionalidade.
-  - Premissa sobre o FR-006 (Seleção de Embeddings): Devido a restrições de compatibilidade de índices vetoriais, o sistema inicial implementará um único modelo de embeddings hardcoded. A "seleção" citada no FR-006 assume-se resolvida através da exibição transparente do modelo ativo na interface, configurando-o como read-only até que uma arquitetura de re-indexação em background seja planejada em versões futuras.
+- Premissa sobre o FR-006 (Seleção de Embeddings): Devido a restrições de compatibilidade de índices vetoriais, o sistema inicial implementará um único modelo de embeddings hardcoded. A "seleção" citada no FR-006 assume-se resolvida através da exibição transparente do modelo ativo na interface, configurando-o como read-only até que uma arquitetura de re-indexação em background seja planejada em versões futuras.
